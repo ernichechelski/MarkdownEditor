@@ -45,11 +45,13 @@
     </LinearLayout>
 
     <android.support.v4.widget.NestedScrollView
+        android:layout_gravity="center_horizontal"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
         <android.support.v7.widget.RecyclerView
+            android:layout_gravity="center_horizontal"
             android:id="@+id/buttons_recycler_view"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

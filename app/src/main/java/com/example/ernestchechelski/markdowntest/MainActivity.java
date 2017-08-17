@@ -1,6 +1,5 @@
 package com.example.ernestchechelski.markdowntest;
 
-import android.content.DialogInterface;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.DefaultItemAnimator;
@@ -33,7 +32,10 @@ public class MainActivity extends AppCompatActivity {
 
     private RecyclerView recyclerView;
     private MoviesAdapter mAdapter;
-    private List<BarAction> movieList = new ArrayList<>();
+    private List<BarAction> rawTags = new ArrayList<>();
+    private List<BarAction> autoTags = new ArrayList<>();
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,21 +45,13 @@ public class MainActivity extends AppCompatActivity {
         webView = (WebView) this.findViewById(R.id.webView);
         editText = (EditText) this.findViewById(R.id.editText);
         recyclerView = (RecyclerView) findViewById(R.id.buttons_recycler_view);
-        mAdapter = new MoviesAdapter(movieList);
+        mAdapter = new MoviesAdapter(rawTags);
         RecyclerView.LayoutManager mLayoutManager = new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false);
         recyclerView.setLayoutManager(mLayoutManager);
         recyclerView.setItemAnimator(new DefaultItemAnimator());
         recyclerView.setAdapter(mAdapter);
 
-        for (int x=0;x<20;x++){
-            final int val = x;
-            movieList.add(new BarAction(val+"", new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    Log.d(val+"","Button with "+ val +" pressed :)");
-                }
-            }));
-        }
+        loadRawTags();
 
         //editText.setText("This is *Sparta*");
         editText.addTextChangedListener(new TextWatcher() {
@@ -77,7 +71,7 @@ public class MainActivity extends AppCompatActivity {
         parser = Parser.builder(options).build();
         renderer = HtmlRenderer.builder(options).build();
         refresh();
-        loadTestData();
+        //loadTestData();
         // uncomment to set optional extensions
         //options.set(Parser.EXTENSIONS, Arrays.asList(TablesExtension.create(), StrikethroughExtension.create()));
 
@@ -85,6 +79,78 @@ public class MainActivity extends AppCompatActivity {
         //options.set(HtmlRenderer.SOFT_BREAK, "<br />\n");
 
 
+    }
+
+    private void loadRawTags() {
+        rawTags.add(new BarAction("#", new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                insertTextInSelection("#");
+            }
+        }));
+        rawTags.add(new BarAction("*", new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                insertTextInSelection("*");
+            }
+        }));
+        rawTags.add(new BarAction("_", new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                insertTextInSelection("_");
+            }
+        }));
+        rawTags.add(new BarAction("[]()", new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                insertTextInSelection("[]()");
+            }
+        }));
+        rawTags.add(new BarAction(">", new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                insertTextInSelection(">");
+            }
+        }));
+    }
+    private void loadAutoTags() {
+        rawTags.add(new BarAction("H1", new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                insertTextInSelection("#");
+            }
+        }));
+        rawTags.add(new BarAction("H2", new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                insertTextInSelection("##");
+            }
+        }));
+        rawTags.add(new BarAction("H3", new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                insertTextInSelection("###");
+            }
+        }));
+        rawTags.add(new BarAction("H4", new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                insertTextInSelection("####");
+            }
+        }));
+        rawTags.add(new BarAction("H5", new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                insertTextInSelection("#####");
+            }
+        }));
+    }
+
+    private void insertTextInSelection(String textToInsert) {
+        int start = Math.max(editText.getSelectionStart(), 0);
+        int end = Math.max(editText.getSelectionEnd(), 0);
+        editText.getText().replace(Math.min(start, end), Math.max(start, end),
+                textToInsert, 0, textToInsert.length());
     }
 
     private void refresh(){
