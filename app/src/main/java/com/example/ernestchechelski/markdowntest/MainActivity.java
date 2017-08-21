@@ -15,15 +15,22 @@ import android.webkit.WebView;
 import android.widget.Button;
 import android.widget.EditText;
 
+import com.example.ernestchechelski.markdowntest.CustomQuote.CustomQuoteExtension;
 import com.vladsch.flexmark.ast.Node;
+import com.vladsch.flexmark.ext.emoji.EmojiExtension;
+import com.vladsch.flexmark.ext.tables.TablesExtension;
 import com.vladsch.flexmark.html.HtmlRenderer;
 import com.vladsch.flexmark.parser.Parser;
+import com.vladsch.flexmark.util.KeepType;
 import com.vladsch.flexmark.util.options.MutableDataSet;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
+
+    private static final String TAG = "MainActivity";
 
     WebView webView;
     EditText editText;
@@ -43,6 +50,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         this.setTitle("Markdown Editor");
         webView = (WebView) this.findViewById(R.id.webView);
+        webView.getSettings().setDomStorageEnabled(true);
         editText = (EditText) this.findViewById(R.id.editText);
         recyclerView = (RecyclerView) findViewById(R.id.buttons_recycler_view);
         mAdapter = new MoviesAdapter(rawTags);
@@ -67,7 +75,14 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
-        MutableDataSet options = new MutableDataSet();
+        MutableDataSet options = new MutableDataSet()
+                .set(Parser.REFERENCES_KEEP, KeepType.LAST)
+                .set(HtmlRenderer.INDENT_SIZE, 2)
+                .set(HtmlRenderer.PERCENT_ENCODE_URLS, true)
+                .set(EmojiExtension.USE_IMAGE_URLS,true)
+
+                .set(Parser.EXTENSIONS, Arrays.asList(EmojiExtension.create(), CustomQuoteExtension.create()));
+
         parser = Parser.builder(options).build();
         renderer = HtmlRenderer.builder(options).build();
         refresh();
@@ -103,9 +118,14 @@ public class MainActivity extends AppCompatActivity {
         rawTags.add(new BarAction("[]()", new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                Integer selection = editText.getSelectionStart();
                 insertTextInSelection("[]()");
+                editText.setSelection(selection + 1);
+
             }
         }));
+
+
         rawTags.add(new BarAction(">", new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -147,17 +167,23 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void insertTextInSelection(String textToInsert) {
-        int start = Math.max(editText.getSelectionStart(), 0);
-        int end = Math.max(editText.getSelectionEnd(), 0);
+       insertTextInSelection(textToInsert,0);
+    }
+    private void insertTextInSelection(String textToInsert,Integer shift) {
+        int start = Math.max(editText.getSelectionStart()+shift, 0);
+        int end = Math.max(editText.getSelectionEnd()+shift, 0);
         editText.getText().replace(Math.min(start, end), Math.max(start, end),
                 textToInsert, 0, textToInsert.length());
     }
+
 
     private void refresh(){
         Node document = parser.parse(editText.getText().toString());
         String html = renderer.render(document);  // "<p>This is <em>Sparta</em></p>\n"
         webView.getSettings().setJavaScriptEnabled(true);
         webView.loadDataWithBaseURL("", html, "text/html", "UTF-8", "");
+        System.out.println(html);
+        Log.v(TAG, "Refresh()=" + html);
     }
 
     private void loadTestData(){
