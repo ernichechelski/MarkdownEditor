@@ -51,9 +51,9 @@ public class CustomQuoteNodeRenderer implements NodeRenderer {
         CustomQuoteCheetSheet.CustomQuoteShortcut shortcut = CustomQuoteCheetSheet.shortCutMap.get(emoji.getText().toString());
         if (shortcut == null) {
             // output as text
-            html.text("XX:");
+            html.text(":");
             context.renderChildren(node);
-            html.text(":XX");
+            html.text(":");
         } else {
             ResolvedLink resolvedLink = context.resolveLink(LinkType.IMAGE, useImageURL ? shortcut.url : rootImagePath + shortcut.image, null);
 
@@ -69,7 +69,7 @@ public class CustomQuoteNodeRenderer implements NodeRenderer {
     public static class Factory implements NodeRendererFactory {
         @Override
         public NodeRenderer create(final DataHolder options) {
-            return new com.vladsch.flexmark.ext.emoji.internal.EmojiNodeRenderer(options);
+            return new CustomQuoteNodeRenderer(options);
         }
     }
 }

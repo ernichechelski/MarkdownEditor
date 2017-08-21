@@ -79,9 +79,8 @@ public class MainActivity extends AppCompatActivity {
                 .set(Parser.REFERENCES_KEEP, KeepType.LAST)
                 .set(HtmlRenderer.INDENT_SIZE, 2)
                 .set(HtmlRenderer.PERCENT_ENCODE_URLS, true)
-                .set(EmojiExtension.USE_IMAGE_URLS,true)
-
-                .set(Parser.EXTENSIONS, Arrays.asList(EmojiExtension.create(), CustomQuoteExtension.create()));
+                .set(CustomQuoteExtension.USE_IMAGE_URLS,true)
+                .set(Parser.EXTENSIONS, Arrays.asList(CustomQuoteExtension.create()));
 
         parser = Parser.builder(options).build();
         renderer = HtmlRenderer.builder(options).build();

@@ -17,12 +17,12 @@ public class CustomQuoteDelimiterProcessor implements DelimiterProcessor {
 
     @Override
     public char getOpeningCharacter() {
-        return '@';
+        return ':';
     }
 
     @Override
     public char getClosingCharacter() {
-        return '@';
+        return ':';
     }
 
     @Override
