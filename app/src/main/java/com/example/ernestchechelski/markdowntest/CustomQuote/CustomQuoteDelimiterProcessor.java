@@ -17,12 +17,12 @@ public class CustomQuoteDelimiterProcessor implements DelimiterProcessor {
 
     @Override
     public char getOpeningCharacter() {
-        return ':';
+        return '@';
     }
 
     @Override
     public char getClosingCharacter() {
-        return ':';
+        return '@';
     }
 
     @Override
@@ -59,8 +59,8 @@ public class CustomQuoteDelimiterProcessor implements DelimiterProcessor {
         // Normal case, wrap nodes between delimiters in emoji node.
         // don't allow any spaces between delimiters
         if (opener.getInput().subSequence(opener.getEndIndex(), closer.getStartIndex()).indexOfAny(BasedSequence.WHITESPACE_CHARS) == -1) {
-            CustomQuote emoji = new CustomQuote(opener.getTailChars(delimitersUsed), BasedSequence.NULL, closer.getLeadChars(delimitersUsed));
-            opener.moveNodesBetweenDelimitersTo(emoji, closer);
+            CustomQuote customQuote = new CustomQuote(opener.getTailChars(delimitersUsed), BasedSequence.NULL, closer.getLeadChars(delimitersUsed));
+            opener.moveNodesBetweenDelimitersTo(customQuote, closer);
         } else {
             opener.convertDelimitersToText(delimitersUsed, closer);
         }
