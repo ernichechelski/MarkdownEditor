@@ -1,5 +1,6 @@
 package com.example.ernestchechelski.markdowntest;
 
+import android.content.res.AssetManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.DefaultItemAnimator;
@@ -24,6 +25,18 @@ import com.vladsch.flexmark.parser.Parser;
 import com.vladsch.flexmark.util.KeepType;
 import com.vladsch.flexmark.util.options.MutableDataSet;
 
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.io.StringWriter;
+import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -84,7 +97,8 @@ public class MainActivity extends AppCompatActivity {
 
         parser = Parser.builder(options).build();
         renderer = HtmlRenderer.builder(options).build();
-        refresh();
+        refresh();//loadTestData2();
+        loadTestAsset();
         //loadTestData();
         // uncomment to set optional extensions
         //options.set(Parser.EXTENSIONS, Arrays.asList(TablesExtension.create(), StrikethroughExtension.create()));
@@ -95,6 +109,52 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    private void loadTestAsset() {
+        loadHTML(getTestVerse().html());
+    }
+
+    private Elements getTestVerse(){
+
+        try {
+            Log.d(TAG,"Loading assets");
+            AssetManager mgr = getBaseContext().getAssets();
+            String htmlContentInStringFormat;
+            String htmlFilename = "TestBible/1001061105.xhtml";
+            InputStream in = mgr.open(htmlFilename, AssetManager.ACCESS_BUFFER);
+            htmlContentInStringFormat = StreamToString(in);
+            Log.d(TAG,"String loaded"+htmlContentInStringFormat);
+            Document document = Jsoup.parse(htmlContentInStringFormat);
+            Elements elements = document.select("#p2");
+            Log.d(TAG,"Element with content loaded" + elements.html());
+            loadHTML(elements.html());
+            in.close();
+            return elements;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public static String StreamToString(InputStream in) throws IOException {
+        Log.d(TAG,"StreamToString");
+        if(in == null) {
+            return "";
+        }
+        Writer writer = new StringWriter();
+        char[] buffer = new char[1024];
+        try {
+            Reader reader = new BufferedReader(new InputStreamReader(in, "UTF-8"));
+            int n;
+            while ((n = reader.read(buffer)) != -1) {
+                writer.write(buffer, 0, n);
+            }
+        } finally {
+        }
+        return writer.toString();
+    }
+    private void loadHTML(String html) {
+        webView.loadDataWithBaseURL("", html, "text/html", "UTF-8", "");
+    }
     private void loadRawTags() {
         rawTags.add(new BarAction("#", new View.OnClickListener() {
             @Override
@@ -211,6 +271,12 @@ public class MainActivity extends AppCompatActivity {
                 "in chapters 12--14\"). Three dots ... will be converted to an ellipsis.\n" +
                 "Unicode is supported. ☺\n" +
                 "\n");refresh();
+
+
+    }
+
+    private void loadTestData2(){
+        editText.setText(":smile:");refresh();
 
 
     }

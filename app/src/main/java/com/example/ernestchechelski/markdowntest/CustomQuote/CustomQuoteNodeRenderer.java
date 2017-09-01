@@ -55,14 +55,17 @@ public class CustomQuoteNodeRenderer implements NodeRenderer {
             context.renderChildren(node);
             html.text(":");
         } else {
-            ResolvedLink resolvedLink = context.resolveLink(LinkType.IMAGE, useImageURL ? shortcut.url : rootImagePath + shortcut.image, null);
+//            ResolvedLink resolvedLink = context.resolveLink(LinkType.IMAGE, useImageURL ? shortcut.url : rootImagePath + shortcut.image, null);
+//
+//
+//            html.attr("src", resolvedLink.getUrl());
+//            html.attr("alt", "emoji " + shortcut.category + ":" + shortcut.name);
+//            if (!attrImageSize.isEmpty()) html.attr("height", attrImageSize).attr("width", attrImageSize);
+//            if (!attrAlign.isEmpty()) html.attr("align", attrAlign);
+//            html.withAttr(resolvedLink);
+//            html.tagVoid("img");
 
-            html.attr("src", resolvedLink.getUrl());
-            html.attr("alt", "emoji " + shortcut.category + ":" + shortcut.name);
-            if (!attrImageSize.isEmpty()) html.attr("height", attrImageSize).attr("width", attrImageSize);
-            if (!attrAlign.isEmpty()) html.attr("align", attrAlign);
-            html.withAttr(resolvedLink);
-            html.tagVoid("img");
+            html.text("XD");
         }
     }
 

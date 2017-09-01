@@ -1,7 +1,7 @@
 package com.example.ernestchechelski.markdowntest.CustomQuote;
 
+import android.util.Log;
 import com.vladsch.flexmark.ast.Node;
-import com.vladsch.flexmark.ext.emoji.Emoji;
 import com.vladsch.flexmark.internal.Delimiter;
 import com.vladsch.flexmark.parser.InlineParser;
 import com.vladsch.flexmark.parser.delimiter.DelimiterProcessor;
@@ -15,6 +15,7 @@ import com.vladsch.flexmark.util.sequence.BasedSequence;
 
 public class CustomQuoteDelimiterProcessor implements DelimiterProcessor {
 
+    public static final String TAG = "CustomQuoteDelProc";
     @Override
     public char getOpeningCharacter() {
         return ':';
@@ -56,10 +57,12 @@ public class CustomQuoteDelimiterProcessor implements DelimiterProcessor {
 
     @Override
     public void process(Delimiter opener, Delimiter closer, int delimitersUsed) {
+        Log.d(TAG,opener.toString()+ "" + closer.toString() + delimitersUsed);
         // Normal case, wrap nodes between delimiters in emoji node.
         // don't allow any spaces between delimiters
         if (opener.getInput().subSequence(opener.getEndIndex(), closer.getStartIndex()).indexOfAny(BasedSequence.WHITESPACE_CHARS) == -1) {
             CustomQuote emoji = new CustomQuote(opener.getTailChars(delimitersUsed), BasedSequence.NULL, closer.getLeadChars(delimitersUsed));
+            Log.d(TAG,emoji.toString());
             opener.moveNodesBetweenDelimitersTo(emoji, closer);
         } else {
             opener.convertDelimitersToText(delimitersUsed, closer);

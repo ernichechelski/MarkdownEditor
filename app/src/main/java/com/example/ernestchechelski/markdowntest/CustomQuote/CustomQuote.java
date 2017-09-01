@@ -60,4 +60,13 @@ public class CustomQuote extends CustomNode implements DelimitedNode {
     public void setClosingMarker(BasedSequence closingMarker) {
         this.closingMarker = closingMarker;
     }
+
+    @Override
+    public String toString() {
+        return "CustomQuote{" +
+                "openingMarker=" + openingMarker +
+                ", text=" + text +
+                ", closingMarker=" + closingMarker +
+                '}';
+    }
 }
