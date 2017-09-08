@@ -143,7 +143,7 @@ public class CustomQuoteRepository {
             Log.d(TAG,"Selector generated:"+id);
 
             Element elements =  document.getElementById(id).parent();
-            Log.d(TAG,"Element with content loaded" + elements.outerHtml());
+            Log.d(TAG,"Element with content loaded" + elements.html());
             in.close();
             return elements.text().toString();
         } catch (IOException e) {
