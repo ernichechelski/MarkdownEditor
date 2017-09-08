@@ -18,12 +18,12 @@ public class CustomQuoteDelimiterProcessor implements DelimiterProcessor {
     public static final String TAG = "CustomQuoteDelProc";
     @Override
     public char getOpeningCharacter() {
-        return ':';
+        return '|';
     }
 
     @Override
     public char getClosingCharacter() {
-        return ':';
+        return '|';
     }
 
     @Override

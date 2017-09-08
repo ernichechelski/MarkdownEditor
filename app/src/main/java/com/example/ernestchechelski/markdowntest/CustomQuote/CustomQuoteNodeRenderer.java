@@ -1,5 +1,9 @@
 package com.example.ernestchechelski.markdowntest.CustomQuote;
 
+import android.content.Context;
+import android.util.Log;
+
+import com.vladsch.flexmark.ast.Node;
 import com.vladsch.flexmark.ext.emoji.Emoji;
 import com.vladsch.flexmark.ext.emoji.EmojiExtension;
 import com.vladsch.flexmark.ext.emoji.internal.EmojiCheatSheet;
@@ -12,6 +16,7 @@ import com.vladsch.flexmark.html.renderer.NodeRendererFactory;
 import com.vladsch.flexmark.html.renderer.NodeRenderingHandler;
 import com.vladsch.flexmark.html.renderer.ResolvedLink;
 import com.vladsch.flexmark.util.options.DataHolder;
+import com.vladsch.flexmark.util.sequence.BasedSequence;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -22,6 +27,7 @@ import java.util.Set;
 
 
 public class CustomQuoteNodeRenderer implements NodeRenderer {
+    public static String TAG = CustomQuoteNodeRenderer.class.getName();
     private final String rootImagePath;
     private final boolean useImageURL;
     private final String attrImageSize;
@@ -46,26 +52,20 @@ public class CustomQuoteNodeRenderer implements NodeRenderer {
         return set;
     }
 
-    private void render(CustomQuote node, NodeRendererContext context, HtmlWriter html) {
-        CustomQuote emoji = (CustomQuote) node;
-        CustomQuoteCheetSheet.CustomQuoteShortcut shortcut = CustomQuoteCheetSheet.shortCutMap.get(emoji.getText().toString());
-        if (shortcut == null) {
-            // output as text
-            html.text(":");
-            context.renderChildren(node);
-            html.text(":");
-        } else {
-//            ResolvedLink resolvedLink = context.resolveLink(LinkType.IMAGE, useImageURL ? shortcut.url : rootImagePath + shortcut.image, null);
-//
-//
-//            html.attr("src", resolvedLink.getUrl());
-//            html.attr("alt", "emoji " + shortcut.category + ":" + shortcut.name);
-//            if (!attrImageSize.isEmpty()) html.attr("height", attrImageSize).attr("width", attrImageSize);
-//            if (!attrAlign.isEmpty()) html.attr("align", attrAlign);
-//            html.withAttr(resolvedLink);
-//            html.tagVoid("img");
-
-            html.text("XD");
+    private void render(final CustomQuote node, NodeRendererContext context, HtmlWriter html) {
+        CustomQuote customQuoteNode = (CustomQuote) node;
+        Log.d(TAG,"Render");
+        CustomQuoteRepository customQuoteRepository = new CustomQuoteRepository(CustomQuoteExtension.context,CustomQuoteExtension.resourceCatalogName);
+        String parsedQuote = customQuoteRepository.getHtmlStringByParsedString(customQuoteNode.getText().toString());
+        if(parsedQuote == null){
+            Log.d(TAG,"Null parsed quote");
+            html.text("|");
+            html.text(node.getText().toUpperCase());
+            html.text("|");
+        }
+        else {
+            Log.d(TAG, "parsed quote" + parsedQuote);
+            html.text(parsedQuote);
         }
     }
 

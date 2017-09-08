@@ -1,5 +1,7 @@
 package com.example.ernestchechelski.markdowntest.CustomQuote;
 
+import android.content.Context;
+
 import com.vladsch.flexmark.Extension;
 import com.vladsch.flexmark.ext.emoji.internal.EmojiDelimiterProcessor;
 import com.vladsch.flexmark.ext.emoji.internal.EmojiJiraRenderer;
@@ -19,12 +21,16 @@ public class CustomQuoteExtension implements Parser.ParserExtension, HtmlRendere
     public static final DataKey<String> ATTR_IMAGE_SIZE = new DataKey<String>("ATTR_IMAGE_SIZE", "20");
     public static final DataKey<String> ROOT_IMAGE_PATH = new DataKey<String>("ROOT_IMAGE_PATH", "/img/");
     public static final DataKey<Boolean> USE_IMAGE_URLS = new DataKey<Boolean>("USE_IMAGE_URLS", false);
+    public static Context context;
+    public static String resourceCatalogName;
+    private CustomQuoteExtension(Context context,String resourceCatalogName) {
+        CustomQuoteExtension.context = context;
+        CustomQuoteExtension.resourceCatalogName = resourceCatalogName;
 
-    private CustomQuoteExtension() {
     }
 
-    public static Extension create() {
-        return new CustomQuoteExtension();
+    public static Extension create(Context context,String resourceCatalogName) {
+        return new CustomQuoteExtension(context,resourceCatalogName);
     }
 
     @Override

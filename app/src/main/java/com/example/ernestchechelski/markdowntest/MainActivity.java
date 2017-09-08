@@ -95,12 +95,14 @@ public class MainActivity extends AppCompatActivity {
                 .set(HtmlRenderer.INDENT_SIZE, 2)
                 .set(HtmlRenderer.PERCENT_ENCODE_URLS, true)
                 .set(CustomQuoteExtension.USE_IMAGE_URLS,true)
-                .set(Parser.EXTENSIONS, Arrays.asList(CustomQuoteExtension.create()));
+                .set(Parser.EXTENSIONS, Arrays.asList(CustomQuoteExtension.create(this,"TestBible")));
 
         parser = Parser.builder(options).build();
         renderer = HtmlRenderer.builder(options).build();
-        refresh();//loadTestData2();
-        loadTestAsset();
+        refresh();
+        loadTestData2();
+        //loadTestAsset();
+
         //loadTestData();
         // uncomment to set optional extensions
         //options.set(Parser.EXTENSIONS, Arrays.asList(TablesExtension.create(), StrikethroughExtension.create()));
@@ -114,9 +116,9 @@ public class MainActivity extends AppCompatActivity {
     private void loadTestAsset() {
 
 
-        CustomQuoteRepository customQuoteRepository = new CustomQuoteRepository(this);
-        loadHTML(customQuoteRepository.getHtmlString("Ge",1,2));
-
+        CustomQuoteRepository customQuoteRepository = new CustomQuoteRepository(this,"TestBible");
+       // loadHTML(customQuoteRepository.getHtmlString("Ge",1,2));
+        loadHTML(customQuoteRepository.getHtmlStringByParsedString("Ge 1:1"));
        // loadHTML(getTestVerse().html());
 
     }
@@ -279,14 +281,10 @@ public class MainActivity extends AppCompatActivity {
                 "in chapters 12--14\"). Three dots ... will be converted to an ellipsis.\n" +
                 "Unicode is supported. ☺\n" +
                 "\n");refresh();
-
-
     }
 
     private void loadTestData2(){
-        editText.setText(":smile:");refresh();
-
-
+        editText.setText("# Genesis \n > |Ge1:1| \n\n > |Ge1:2| \n\n > |Ge1:3| \n\n > |Ge1:4| \n\n > |Ge1:5| \n\n and so on...");refresh();
     }
     public class BarAction {
         public String name;
