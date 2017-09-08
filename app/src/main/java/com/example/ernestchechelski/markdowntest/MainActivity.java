@@ -16,7 +16,9 @@ import android.webkit.WebView;
 import android.widget.Button;
 import android.widget.EditText;
 
+import com.example.ernestchechelski.markdowntest.CustomQuote.CustomQuote;
 import com.example.ernestchechelski.markdowntest.CustomQuote.CustomQuoteExtension;
+import com.example.ernestchechelski.markdowntest.CustomQuote.CustomQuoteRepository;
 import com.vladsch.flexmark.ast.Node;
 import com.vladsch.flexmark.ext.emoji.EmojiExtension;
 import com.vladsch.flexmark.ext.tables.TablesExtension;
@@ -110,7 +112,13 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void loadTestAsset() {
-        loadHTML(getTestVerse().html());
+
+
+        CustomQuoteRepository customQuoteRepository = new CustomQuoteRepository(this);
+        loadHTML(customQuoteRepository.getHtmlString("Ge",1,2));
+
+       // loadHTML(getTestVerse().html());
+
     }
 
     private Elements getTestVerse(){
