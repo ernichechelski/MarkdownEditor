@@ -16,12 +16,13 @@ import android.webkit.WebView;
 import android.widget.Button;
 import android.widget.EditText;
 
-import com.example.ernestchechelski.markdowntest.CustomQuote.CustomQuote;
-import com.example.ernestchechelski.markdowntest.CustomQuote.CustomQuoteExtension;
-import com.example.ernestchechelski.markdowntest.CustomQuote.CustomQuoteRepository;
+import com.example.ernestchechelski.markdowntest.customQuote.CustomQuoteExtension;
+import com.example.ernestchechelski.markdowntest.customQuote.CustomQuoteRepository;
+import com.example.ernestchechelski.markdowntest.notes.domain.Note;
+import com.example.ernestchechelski.markdowntest.notes.NotesRepository;
+import com.example.ernestchechelski.markdowntest.notes.SugarNotesRepository;
+import com.orm.SugarDb;
 import com.vladsch.flexmark.ast.Node;
-import com.vladsch.flexmark.ext.emoji.EmojiExtension;
-import com.vladsch.flexmark.ext.tables.TablesExtension;
 import com.vladsch.flexmark.html.HtmlRenderer;
 import com.vladsch.flexmark.parser.Parser;
 import com.vladsch.flexmark.util.KeepType;
@@ -29,7 +30,6 @@ import com.vladsch.flexmark.util.options.MutableDataSet;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import java.io.BufferedReader;
@@ -52,44 +52,34 @@ public class MainActivity extends AppCompatActivity {
     Parser parser;
     HtmlRenderer renderer;
 
+    NotesRepository notesRepository;
+
     private RecyclerView recyclerView;
     private MoviesAdapter mAdapter;
     private List<BarAction> rawTags = new ArrayList<>();
     private List<BarAction> autoTags = new ArrayList<>();
 
-
+    private Note currentNote;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         setContentView(R.layout.activity_main);
         this.setTitle("Markdown Editor");
-        webView = (WebView) this.findViewById(R.id.webView);
-        webView.getSettings().setDomStorageEnabled(true);
-        editText = (EditText) this.findViewById(R.id.editText);
-        recyclerView = (RecyclerView) findViewById(R.id.buttons_recycler_view);
-        mAdapter = new MoviesAdapter(rawTags);
-        RecyclerView.LayoutManager mLayoutManager = new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false);
-        recyclerView.setLayoutManager(mLayoutManager);
-        recyclerView.setItemAnimator(new DefaultItemAnimator());
-        recyclerView.setAdapter(mAdapter);
-
+        setUI();
         loadRawTags();
+        notesRepository = new SugarNotesRepository();
 
-        //editText.setText("This is *Sparta*");
-        editText.addTextChangedListener(new TextWatcher() {
+        setMarkdownParser();
+        //loadTestData2();
 
-            public void afterTextChanged(Editable s) {
-               refresh();
-            }
+        loadData();
+        refresh();
 
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+    }
 
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-
-
-            }
-        });
+    private void setMarkdownParser() {
         MutableDataSet options = new MutableDataSet()
                 .set(Parser.REFERENCES_KEEP, KeepType.LAST)
                 .set(HtmlRenderer.INDENT_SIZE, 2)
@@ -99,18 +89,31 @@ public class MainActivity extends AppCompatActivity {
 
         parser = Parser.builder(options).build();
         renderer = HtmlRenderer.builder(options).build();
-        refresh();
-        loadTestData2();
-        //loadTestAsset();
+    }
 
-        //loadTestData();
-        // uncomment to set optional extensions
-        //options.set(Parser.EXTENSIONS, Arrays.asList(TablesExtension.create(), StrikethroughExtension.create()));
+    private void setUI() {
+        webView = (WebView) this.findViewById(R.id.webView);
+        webView.getSettings().setDomStorageEnabled(true);
+        editText = (EditText) this.findViewById(R.id.editText);
+        recyclerView = (RecyclerView) findViewById(R.id.buttons_recycler_view);
+        mAdapter = new MoviesAdapter(rawTags);
+        RecyclerView.LayoutManager mLayoutManager = new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false);
+        recyclerView.setLayoutManager(mLayoutManager);
+        recyclerView.setItemAnimator(new DefaultItemAnimator());
+        recyclerView.setAdapter(mAdapter);
+        editText.addTextChangedListener(new TextWatcher() {
 
-        // uncomment to convert soft-breaks to hard breaks
-        //options.set(HtmlRenderer.SOFT_BREAK, "<br />\n");
+            public void afterTextChanged(Editable s) {
+                refresh();
+            }
+
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
 
 
+            }
+        });
     }
 
     private void loadTestAsset() {
@@ -247,6 +250,10 @@ public class MainActivity extends AppCompatActivity {
 
 
     private void refresh(){
+        if (currentNote != null){
+            currentNote.setContent(editText.getText().toString());
+            notesRepository.saveNote(currentNote);
+        }
         Node document = parser.parse(editText.getText().toString());
         String html = renderer.render(document);  // "<p>This is <em>Sparta</em></p>\n"
         webView.getSettings().setJavaScriptEnabled(true);
@@ -284,7 +291,17 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void loadTestData2(){
-        editText.setText("# Genesis \n > |Ge1:1| \n\n > |Ge1:2| \n\n > |Ge1:3| \n\n > |Ge1:4| \n\n > |Ge1:5| \n\n and so on...");refresh();
+        editText.setText("# Genesis \n > |Ge1:1| \n\n > |Ge1:2| \n\n > |Ge1:3| \n\n > |Ge1:4| \n\n > |Ge1:5| \n\n and so on...");
+    }
+
+    private void loadData(){
+        currentNote = notesRepository.getNote(1L);
+        if(currentNote!=null){
+
+        }else {
+            currentNote = notesRepository.createBlankNote();
+        }
+        editText.setText(currentNote.getContent());
     }
     public class BarAction {
         public String name;

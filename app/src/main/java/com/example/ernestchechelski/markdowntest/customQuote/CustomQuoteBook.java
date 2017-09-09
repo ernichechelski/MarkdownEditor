@@ -1,4 +1,4 @@
-package com.example.ernestchechelski.markdowntest.CustomQuote;
+package com.example.ernestchechelski.markdowntest.customQuote;
 
 /**
  * Created by ernest.chechelski on 9/8/2017.

@@ -1,4 +1,4 @@
-package com.example.ernestchechelski.markdowntest.CustomQuote;
+package com.example.ernestchechelski.markdowntest.customQuote;
 
 import android.util.Log;
 import com.vladsch.flexmark.ast.Node;

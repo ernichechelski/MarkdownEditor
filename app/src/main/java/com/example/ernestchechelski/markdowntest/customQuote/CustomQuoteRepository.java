@@ -1,4 +1,4 @@
-package com.example.ernestchechelski.markdowntest.CustomQuote;
+package com.example.ernestchechelski.markdowntest.customQuote;
 
 import android.content.Context;
 import android.content.res.AssetManager;
@@ -9,7 +9,6 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.nodes.Node;
 import org.jsoup.nodes.TextNode;
-import org.jsoup.select.Elements;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -24,6 +23,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
+ *
  * Created by ernest.chechelski on 9/8/2017.
  */
 

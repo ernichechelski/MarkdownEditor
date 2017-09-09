@@ -1,4 +1,4 @@
-package com.example.ernestchechelski.markdowntest.CustomQuote;
+package com.example.ernestchechelski.markdowntest.customQuote;
 
 import java.util.HashMap;
 import java.util.Map;

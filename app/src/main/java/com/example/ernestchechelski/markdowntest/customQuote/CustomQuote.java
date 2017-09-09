@@ -1,4 +1,4 @@
-package com.example.ernestchechelski.markdowntest.CustomQuote;
+package com.example.ernestchechelski.markdowntest.customQuote;
 
 import com.vladsch.flexmark.ast.CustomNode;
 import com.vladsch.flexmark.ast.DelimitedNode;
