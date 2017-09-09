@@ -47,49 +47,52 @@ public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "MainActivity";
 
-    WebView webView;
-    EditText editText;
-    Parser parser;
-    HtmlRenderer renderer;
-
-    NotesRepository notesRepository;
-
+    //UI related properties
+    private WebView webView;
+    private EditText editText;
     private RecyclerView recyclerView;
     private MoviesAdapter mAdapter;
     private List<BarAction> rawTags = new ArrayList<>();
-    private List<BarAction> autoTags = new ArrayList<>();
 
+    //Editor related properties
+    private Parser parser;
+    private HtmlRenderer renderer;
+    private NotesRepository notesRepository;
     private Note currentNote;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         setContentView(R.layout.activity_main);
-        this.setTitle("Markdown Editor");
+        setTitle("Markdown Editor");
         setUI();
-        loadRawTags();
-        notesRepository = new SugarNotesRepository();
-
-        setMarkdownParser();
-        //loadTestData2();
-
         loadData();
-        refresh();
 
     }
 
     private void setMarkdownParser() {
+        parser = getParser();
+        renderer = getHtmlRenderer();
+    }
+
+
+    private Parser getParser(){
+        return Parser.builder(getOptions()).build();
+    }
+    private HtmlRenderer getHtmlRenderer(){
+        return HtmlRenderer.builder(getOptions()).build();
+    }
+
+    private MutableDataSet getOptions(){
         MutableDataSet options = new MutableDataSet()
                 .set(Parser.REFERENCES_KEEP, KeepType.LAST)
                 .set(HtmlRenderer.INDENT_SIZE, 2)
                 .set(HtmlRenderer.PERCENT_ENCODE_URLS, true)
                 .set(CustomQuoteExtension.USE_IMAGE_URLS,true)
                 .set(Parser.EXTENSIONS, Arrays.asList(CustomQuoteExtension.create(this,"TestBible")));
-
-        parser = Parser.builder(options).build();
-        renderer = HtmlRenderer.builder(options).build();
+        return options;
     }
+
 
     private void setUI() {
         webView = (WebView) this.findViewById(R.id.webView);
@@ -114,60 +117,11 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
+        loadRawTags();
+        setMarkdownParser();
+        setNotesRepository();
     }
 
-    private void loadTestAsset() {
-
-
-        CustomQuoteRepository customQuoteRepository = new CustomQuoteRepository(this,"TestBible");
-       // loadHTML(customQuoteRepository.getHtmlString("Ge",1,2));
-        loadHTML(customQuoteRepository.getHtmlStringByParsedString("Ge 1:1"));
-       // loadHTML(getTestVerse().html());
-
-    }
-
-    private Elements getTestVerse(){
-
-        try {
-            Log.d(TAG,"Loading assets");
-            AssetManager mgr = getBaseContext().getAssets();
-            String htmlContentInStringFormat;
-            String htmlFilename = "TestBible/1001061105.xhtml";
-            InputStream in = mgr.open(htmlFilename, AssetManager.ACCESS_BUFFER);
-            htmlContentInStringFormat = StreamToString(in);
-            Log.d(TAG,"String loaded"+htmlContentInStringFormat);
-            Document document = Jsoup.parse(htmlContentInStringFormat);
-            Elements elements = document.select("#p2");
-            Log.d(TAG,"Element with content loaded" + elements.html());
-            loadHTML(elements.html());
-            in.close();
-            return elements;
-        } catch (IOException e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
-
-    public static String StreamToString(InputStream in) throws IOException {
-        Log.d(TAG,"StreamToString");
-        if(in == null) {
-            return "";
-        }
-        Writer writer = new StringWriter();
-        char[] buffer = new char[1024];
-        try {
-            Reader reader = new BufferedReader(new InputStreamReader(in, "UTF-8"));
-            int n;
-            while ((n = reader.read(buffer)) != -1) {
-                writer.write(buffer, 0, n);
-            }
-        } finally {
-        }
-        return writer.toString();
-    }
-    private void loadHTML(String html) {
-        webView.loadDataWithBaseURL("", html, "text/html", "UTF-8", "");
-    }
     private void loadRawTags() {
         rawTags.add(new BarAction("#", new View.OnClickListener() {
             @Override
@@ -193,19 +147,30 @@ public class MainActivity extends AppCompatActivity {
                 Integer selection = editText.getSelectionStart();
                 insertTextInSelection("[]()");
                 editText.setSelection(selection + 1);
-
             }
         }));
-
-
+        rawTags.add(new BarAction("||", new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Integer selection = editText.getSelectionStart();
+                insertTextInSelection("||");
+                editText.setSelection(selection + 1);
+            }
+        }));
+        rawTags.add(new BarAction("``", new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Integer selection = editText.getSelectionStart();
+                insertTextInSelection("``");
+                editText.setSelection(selection + 1);
+            }
+        }));
         rawTags.add(new BarAction(">", new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 insertTextInSelection(">");
             }
         }));
-    }
-    private void loadAutoTags() {
         rawTags.add(new BarAction("H1", new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -238,6 +203,7 @@ public class MainActivity extends AppCompatActivity {
         }));
     }
 
+
     private void insertTextInSelection(String textToInsert) {
        insertTextInSelection(textToInsert,0);
     }
@@ -255,44 +221,13 @@ public class MainActivity extends AppCompatActivity {
             notesRepository.saveNote(currentNote);
         }
         Node document = parser.parse(editText.getText().toString());
-        String html = renderer.render(document);  // "<p>This is <em>Sparta</em></p>\n"
+        String html = renderer.render(document);
         webView.getSettings().setJavaScriptEnabled(true);
         webView.loadDataWithBaseURL("", html, "text/html", "UTF-8", "");
         System.out.println(html);
         Log.v(TAG, "Refresh()=" + html);
     }
 
-    private void loadTestData(){
-        editText.setText("An h1 header\n" +
-                "============\n" +
-                "\n" +
-                "Paragraphs are separated by a blank line.\n" +
-                "\n" +
-                "2nd paragraph. *Italic*, **bold**, and `monospace`. Itemized lists\n" +
-                "look like:\n" +
-                "\n" +
-                "  * this one\n" +
-                "  * that one\n" +
-                "  * the other one\n" +
-                "\n" +
-                "Note that --- not considering the asterisk --- the actual text\n" +
-                "content starts at 4-columns in.\n" +
-                "\n" +
-                "> Block quotes are\n" +
-                "> written like so.\n" +
-                ">\n" +
-                "> They can span multiple paragraphs,\n" +
-                "> if you like.\n" +
-                "\n" +
-                "Use 3 dashes for an em-dash. Use 2 dashes for ranges (ex., \"it's all\n" +
-                "in chapters 12--14\"). Three dots ... will be converted to an ellipsis.\n" +
-                "Unicode is supported. ☺\n" +
-                "\n");refresh();
-    }
-
-    private void loadTestData2(){
-        editText.setText("# Genesis \n > |Ge1:1| \n\n > |Ge1:2| \n\n > |Ge1:3| \n\n > |Ge1:4| \n\n > |Ge1:5| \n\n and so on...");
-    }
 
     private void loadData(){
         currentNote = notesRepository.getNote(1L);
@@ -302,7 +237,13 @@ public class MainActivity extends AppCompatActivity {
             currentNote = notesRepository.createBlankNote();
         }
         editText.setText(currentNote.getContent());
+        refresh();
     }
+
+    private void setNotesRepository() {
+        notesRepository = new SugarNotesRepository();
+    }
+
     public class BarAction {
         public String name;
         public View.OnClickListener onClickListener;
@@ -322,10 +263,6 @@ public class MainActivity extends AppCompatActivity {
 
         public View.OnClickListener getOnClickListener() {
             return onClickListener;
-        }
-
-        public void setOnClickListener(View.OnClickListener onClickListener) {
-            this.onClickListener = onClickListener;
         }
     }
 

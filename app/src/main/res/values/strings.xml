@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">MarkdownTest</string>
+    <string name="theme">Theme.App.Base</string>
 </resources>

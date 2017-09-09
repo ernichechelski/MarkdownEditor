@@ -52,7 +52,6 @@ public class CustomQuoteRepository {
             Log.e(TAG,"Error with getHtmlStringByParsedString ",e);
             return null;
         }
-
     }
 
     private String getBookcode(String input) {
