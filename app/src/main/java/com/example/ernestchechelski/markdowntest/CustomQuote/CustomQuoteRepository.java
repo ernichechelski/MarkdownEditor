@@ -7,6 +7,9 @@ import android.util.Log;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
+import org.jsoup.nodes.Node;
+import org.jsoup.nodes.TextNode;
+import org.jsoup.select.Elements;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -27,7 +30,6 @@ import java.util.regex.Pattern;
 public class CustomQuoteRepository {
 
     public static String TAG = CustomQuoteRepository.class.getName();
-
     private String resourceCatalogName;
     private Context context;
 
@@ -47,7 +49,7 @@ public class CustomQuoteRepository {
             Integer verse = Integer.valueOf(params.get(1));
             return getHtmlString(bookCode,chapter,verse);
         }catch (Exception e){
-            e.printStackTrace();
+            Log.e(TAG,"Error with getHtmlStringByParsedString ",e);
             return null;
         }
 
@@ -128,32 +130,64 @@ public class CustomQuoteRepository {
 
     public String getHtmlString(String bookCode,Integer chapter, Integer verse){
         try {
-            Log.d(TAG,"Loading assets");
+            Log.v(TAG,"getHtmlString()");
+            Log.d(TAG,"Getting file");
             AssetManager mgr = context.getAssets();
             String htmlContentInStringFormat;
             String htmlFilename = resourceCatalogName+"/"+CustomQuoteBooks.getBookByCode(bookCode).getFullChapterCode(chapter)+".xhtml";
             InputStream in = mgr.open(htmlFilename, AssetManager.ACCESS_BUFFER);
             htmlContentInStringFormat = StreamToString(in);
-            Log.d(TAG,"String loaded"+htmlContentInStringFormat);
+            Log.d(TAG,"Content of file loaded"+htmlContentInStringFormat);
+            Log.v(TAG,"with value: "+htmlContentInStringFormat);
+
+            Log.d(TAG,"Parsing content");
             Document document = Jsoup.parse(htmlContentInStringFormat);
-            //Clean doc from links
-            document.select("a").remove();
 
+            Log.d(TAG,"Cleaning parsed content");
+            document.getElementsByTag("head").remove();
+            document.getElementsByTag("a").remove();
+            document.getElementsByTag("strong").remove();
+            document.getElementsByTag("span").select(".w_ch").remove();
+            for (Element e: document.getElementsByTag("span")){
+                if(e.id().contains("footnotesource")){
+                    e.remove();
+                }
+            }
+
+            Log.v(TAG,"Content after cleanup: "+document.toString());
             String id = "chapter"+chapter+ "_verse"+verse;
-            Log.d(TAG,"Selector generated:"+id);
+            Log.d(TAG,"Generated selector:"+id);
+            Log.d(TAG,"Retrieving element");
 
-            Element elements =  document.getElementById(id).parent();
-            Log.d(TAG,"Element with content loaded" + elements.html());
+            Element e = document.getElementById(id);
+            String result= "";
+            Node parent = e.parent();
+            int childsCount = parent.childNodes().size();
+            for(int x = e.siblingIndex()+1 ; x<childsCount;x++){
+                Node node =  parent.childNode(x);
+                if (node instanceof TextNode){
+                    TextNode textNode = (TextNode) node;
+                    result += textNode.text();
+                }
+                else {
+                    String nodeId = node.attr("id");
+                    if(nodeId.contains("chapter")){
+                        break;
+                    }
+                }
+            }
+            Log.d(TAG,"Result string " + result);
             in.close();
-            return elements.text().toString();
+            return result;
+
         } catch (IOException e) {
-            e.printStackTrace();
+            Log.e(TAG,e.getMessage());
+            Log.e(TAG,"Error with parsing",e);
             return null;
         }
-
     }
 
-    public static String StreamToString(InputStream in) throws IOException {
+   private static String StreamToString(InputStream in) throws IOException {
         Log.d(TAG,"StreamToString");
         if(in == null) {
             return "";
