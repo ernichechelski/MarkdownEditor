@@ -31,7 +31,8 @@
                 android:gravity="top"
                 android:imeOptions="flagNoExtractUi"
                 android:inputType="textMultiLine"
-                android:theme="@style/Theme.App.Base"/>
+                android:padding="10dp"
+                android:theme="@style/Theme.App.Base" />
 
             <WebView
                 android:id="@+id/webView"
