@@ -12,14 +12,14 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.webkit.WebView;
 import android.widget.Button;
 import android.widget.EditText;
 
 import com.example.ernestchechelski.markdowntest.CustomQuote.CustomQuoteExtension;
 import com.vladsch.flexmark.ast.Node;
-import com.vladsch.flexmark.ext.emoji.EmojiExtension;
-import com.vladsch.flexmark.ext.tables.TablesExtension;
 import com.vladsch.flexmark.html.HtmlRenderer;
 import com.vladsch.flexmark.parser.Parser;
 import com.vladsch.flexmark.util.KeepType;
@@ -27,7 +27,6 @@ import com.vladsch.flexmark.util.options.MutableDataSet;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import java.io.BufferedReader;
@@ -51,7 +50,7 @@ public class MainActivity extends AppCompatActivity {
     HtmlRenderer renderer;
 
     private RecyclerView recyclerView;
-    private MoviesAdapter mAdapter;
+    private BarActionAdapter mAdapter;
     private List<BarAction> rawTags = new ArrayList<>();
     private List<BarAction> autoTags = new ArrayList<>();
 
@@ -64,6 +63,7 @@ public class MainActivity extends AppCompatActivity {
         setUI();
         setMarkdown();
         loadRawTags();
+        loadAnotherTags();
         refresh();
         //loadTestData();
         loadTestAsset();
@@ -75,7 +75,7 @@ public class MainActivity extends AppCompatActivity {
             Log.d(TAG,"Loading assets");
             AssetManager mgr = getBaseContext().getAssets();
             String htmlContentInStringFormat;
-            String htmlFilename = "TestBible/1001061105.xhtml";
+            String htmlFilename = "book/1001061105.xhtml";
             InputStream in = mgr.open(htmlFilename, AssetManager.ACCESS_BUFFER);
             htmlContentInStringFormat = StreamToString(in);
             Log.d(TAG,"String loaded"+htmlContentInStringFormat);
@@ -134,7 +134,7 @@ public class MainActivity extends AppCompatActivity {
         webView.getSettings().setDomStorageEnabled(true);
         editText = (EditText) this.findViewById(R.id.editText);
         recyclerView = (RecyclerView) findViewById(R.id.buttons_recycler_view);
-        mAdapter = new MoviesAdapter(rawTags);
+        mAdapter = new BarActionAdapter(rawTags);
         RecyclerView.LayoutManager mLayoutManager = new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false);
         recyclerView.setLayoutManager(mLayoutManager);
         recyclerView.setItemAnimator(new DefaultItemAnimator());
@@ -158,25 +158,31 @@ public class MainActivity extends AppCompatActivity {
 
     private void loadRawTags() {
         Log.d(TAG,"loadRawTags()");
-        rawTags.add(new BarAction("#", new View.OnClickListener() {
+
+        BarAction barAction = new BarAction("Hashes");
+
+
+
+        barAction.addChild(new BarAction("#", new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 insertTextInSelection("#");
             }
         }));
-        rawTags.add(new BarAction("*", new View.OnClickListener() {
+        barAction.addChild(new BarAction("*", new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 insertTextInSelection("*");
             }
         }));
-        rawTags.add(new BarAction("_", new View.OnClickListener() {
+
+        barAction.addChild(new BarAction("_", new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 insertTextInSelection("_");
             }
         }));
-        rawTags.add(new BarAction("[]()", new View.OnClickListener() {
+        barAction.addChild(new BarAction("[]()", new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 Integer selection = editText.getSelectionStart();
@@ -185,47 +191,28 @@ public class MainActivity extends AppCompatActivity {
 
             }
         }));
+        mAdapter.addAction(barAction);
 
 
-        rawTags.add(new BarAction(">", new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                insertTextInSelection(">");
-            }
-        }));
     }
-    private void loadAutoTags() {
-        rawTags.add(new BarAction("H1", new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                insertTextInSelection("#");
-            }
-        }));
-        rawTags.add(new BarAction("H2", new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                insertTextInSelection("##");
-            }
-        }));
-        rawTags.add(new BarAction("H3", new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                insertTextInSelection("###");
-            }
-        }));
-        rawTags.add(new BarAction("H4", new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                insertTextInSelection("####");
-            }
-        }));
-        rawTags.add(new BarAction("H5", new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                insertTextInSelection("#####");
-            }
-        }));
+
+    private void loadAnotherTags() {
+        Log.d(TAG,"loadAnotherTags()");
+
+        BarAction barAction = new BarAction("XD");
+
+        for(int x=0;x<10;x++){
+            final int finalX = x;
+            barAction.addChild(new BarAction(x+"", new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    insertTextInSelection("XD"+ finalX);
+                }
+            }));
+        }
+        mAdapter.addAction(barAction);
     }
+
 
     private void insertTextInSelection(String textToInsert) {
        insertTextInSelection(textToInsert,0);
@@ -282,11 +269,47 @@ public class MainActivity extends AppCompatActivity {
     }
     public class BarAction {
         public String name;
+        public Boolean expanded;
+        public BarActionAdapter parentAdapter;
+        public List<BarAction> children;
+        public BarAction parent;
         public View.OnClickListener onClickListener;
 
         public BarAction(String name, View.OnClickListener onClickListener) {
+            this.expanded =false;
             this.name = name;
             this.onClickListener = onClickListener;
+            children = new ArrayList<>();
+        }
+
+        public BarAction(String name) {
+            this.expanded =false;
+            this.name = name;
+            this.onClickListener = new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    Log.d(TAG,"Default onClickListener for BarAction:" + BarAction.this.toString());
+                }
+            };
+            children = new ArrayList<>();
+        }
+
+
+        public void addChild(BarAction barAction){
+            if(children.isEmpty()){
+                expanded = true;
+                barAction.parent = this;
+                onClickListener = new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        expanded = !expanded;
+                        parentAdapter.notifyDataSetChanged();
+
+                    }
+                };
+            }
+
+            children.add(barAction);
         }
 
         public String getName() {
@@ -304,12 +327,27 @@ public class MainActivity extends AppCompatActivity {
         public void setOnClickListener(View.OnClickListener onClickListener) {
             this.onClickListener = onClickListener;
         }
+
+        @Override
+        public String toString() {
+            return "BarAction{" +
+                    "name='" + name + '\'' +
+                    ", expanded=" + expanded +
+                    ", parentAdapter=" + parentAdapter +
+                    ", children=" + children +
+                    ", parent=" + parent +
+                    ", onClickListener=" + onClickListener +
+                    '}';
+        }
     }
 
 
-    public class MoviesAdapter extends RecyclerView.Adapter<MoviesAdapter.MyViewHolder> {
 
-        private List<BarAction> moviesList;
+
+    public class BarActionAdapter extends RecyclerView.Adapter<BarActionAdapter.MyViewHolder> {
+
+        private List<BarAction> items;
+        int lastPosition = -1;
 
         public class MyViewHolder extends RecyclerView.ViewHolder {
             public Button button;
@@ -321,29 +359,58 @@ public class MainActivity extends AppCompatActivity {
 
         }
 
+        public void addAction(BarAction barAction){
+            barAction.parentAdapter =this;
+            items.add(barAction);
+        }
 
-        public MoviesAdapter(List<BarAction> moviesList) {
-            this.moviesList = moviesList;
+        public void addAction(BarAction barAction,BarAction afterItem){
+            items.add(items.indexOf(afterItem)+1,barAction);
+        }
+
+
+
+
+        public BarActionAdapter(List<BarAction> items) {
+            this.items = items;
         }
 
         @Override
         public MyViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-            View itemView = LayoutInflater.from(parent.getContext())
-                    .inflate(R.layout.buttons_recycle_view_button, parent, false);
+            View itemView = LayoutInflater.from(parent.getContext()).inflate(R.layout.buttons_recycle_view_button, parent, false);
 
             return new MyViewHolder(itemView);
         }
 
         @Override
         public void onBindViewHolder(MyViewHolder holder, int position) {
-            BarAction movie = moviesList.get(position);
+            BarAction movie = getOuterArray().get(position);
             holder.button.setText(movie.getName());
             holder.button.setOnClickListener(movie.getOnClickListener());
+
+            if(true) {
+                Animation animation = AnimationUtils.loadAnimation(getApplicationContext(),
+                        R.anim.up_from_bottom);
+                holder.itemView.startAnimation(animation);
+                lastPosition = position;
+            }
+        }
+
+        private List<BarAction> getOuterArray(){
+            List<BarAction> result = new ArrayList<>();
+            for(BarAction b: items){
+                result.add(b);
+                if(b.expanded)
+                for(BarAction c:b.children){
+                    result.add(c);
+                }
+            }
+            return result;
         }
 
         @Override
         public int getItemCount() {
-            return moviesList.size();
+            return getOuterArray().size();
         }
     }
 
