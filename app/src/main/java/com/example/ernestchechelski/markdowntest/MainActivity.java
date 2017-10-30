@@ -3,31 +3,27 @@ package com.example.ernestchechelski.markdowntest;
 import android.content.res.AssetManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
-import android.view.animation.Animation;
-import android.view.animation.AnimationUtils;
 import android.webkit.WebView;
-import android.widget.Button;
 import android.widget.EditText;
+import com.example.ernestchechelski.markdowntest.barAction.BarAction;
+import com.example.ernestchechelski.markdowntest.barAction.BarActionAdapter;
+import com.example.ernestchechelski.markdowntest.customQuote.CustomQuoteBook;
+import com.example.ernestchechelski.markdowntest.customQuote.CustomQuoteBooks;
 import com.example.ernestchechelski.markdowntest.customQuote.CustomQuoteExtension;
 import com.vladsch.flexmark.ast.Node;
 import com.vladsch.flexmark.html.HtmlRenderer;
 import com.vladsch.flexmark.parser.Parser;
 import com.vladsch.flexmark.util.KeepType;
 import com.vladsch.flexmark.util.options.MutableDataSet;
-
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -38,8 +34,6 @@ import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-
-import jp.wasabeef.recyclerview.animators.SlideInLeftAnimator;
 import jp.wasabeef.recyclerview.animators.SlideInUpAnimator;
 
 public class MainActivity extends AppCompatActivity {
@@ -65,7 +59,7 @@ public class MainActivity extends AppCompatActivity {
         setUI();
         setMarkdown();
         loadRawTags();
-        loadAnotherTags();
+
         refresh();
         //loadTestData();
         //loadTestAsset();
@@ -161,12 +155,10 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void loadRawTags() {
+
+        BarAction.parentAdapter = mAdapter;
         Log.d(TAG,"loadRawTags()");
-
-        BarAction barAction = new BarAction("Hashes");
-
-
-
+        BarAction barAction = new BarAction("M");
         barAction.addChild(new BarAction("#", new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -195,27 +187,46 @@ public class MainActivity extends AppCompatActivity {
 
             }
         }));
-        mAdapter.addAction(barAction);
 
 
-    }
 
-    private void loadAnotherTags() {
-        Log.d(TAG,"loadAnotherTags()");
 
-        BarAction barAction = new BarAction("XD");
+/*
+        BarAction booksBarAction = new BarAction("B");
 
-        for(int x=0;x<10;x++){
-            final int finalX = x;
-            barAction.addChild(new BarAction(x+"", new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    insertTextInSelection("XD"+ finalX);
-                }
-            }));
+
+
+
+
+
+        BarAction genesisBarAction= new BarAction("Ge");
+        final CustomQuoteBook book = CustomQuoteBooks.books.get("Ge");
+        for(int x=0; x<10;x++){
+
+            BarAction chapterBarAction= new BarAction(x+"");
+            for(int y=0; y<10;y++){
+                final int finalX = x;
+                final int finalY = y;
+                BarAction verseBarAction = new BarAction(y + "", new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        insertTextInSelection("|Ge" + finalX +":"+ finalY +"|");
+                    }
+                });
+                chapterBarAction.addChild(verseBarAction);
+            }
+            genesisBarAction.addChild(chapterBarAction);
         }
+
+
+        booksBarAction.addChild(genesisBarAction);
+
+        mAdapter.addAction(booksBarAction);*/
         mAdapter.addAction(barAction);
+
     }
+
+
 
 
     private void insertTextInSelection(String textToInsert) {
@@ -268,158 +279,13 @@ public class MainActivity extends AppCompatActivity {
                 "in chapters 12--14\"). Three dots ... will be converted to an ellipsis.\n" +
                 "Unicode is supported. ☺\n" +
                 "\n");refresh();
-
-
     }
 
     private void loadTestVerse(){
         editText.setText("|Ge1:1|");refresh();
-
-
-    }
-    public class BarAction {
-        public String name;
-        public Boolean expanded;
-        public BarActionAdapter parentAdapter;
-        public List<BarAction> children;
-        public BarAction parent;
-        public View.OnClickListener onClickListener;
-
-        public BarAction(String name, View.OnClickListener onClickListener) {
-            this.expanded =false;
-            this.name = name;
-            this.onClickListener = onClickListener;
-            children = new ArrayList<>();
-        }
-
-        public BarAction(String name) {
-            this.expanded =false;
-            this.name = name;
-            this.onClickListener = new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    Log.d(TAG,"Default onClickListener for BarAction:" + BarAction.this.toString());
-                }
-            };
-            children = new ArrayList<>();
-        }
-
-
-        public void addChild(BarAction barAction){
-            if(children.isEmpty()){
-                expanded = true;
-                barAction.parent = this;
-                onClickListener = new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-                        expanded = !expanded;
-                        if(expanded) {
-                            parentAdapter.notifyItemRangeInserted(parentAdapter.getOuterArray().indexOf(BarAction.this)+1,BarAction.this.children.size());
-                        } else {
-                            parentAdapter.notifyItemRangeRemoved(parentAdapter.getOuterArray().indexOf(BarAction.this)+1,BarAction.this.children.size());
-                        }
-
-                    }
-                };
-            }
-
-            children.add(barAction);
-        }
-
-        public String getName() {
-            return name;
-        }
-
-        public void setName(String name) {
-            this.name = name;
-        }
-
-        public View.OnClickListener getOnClickListener() {
-            return onClickListener;
-        }
-
-        public void setOnClickListener(View.OnClickListener onClickListener) {
-            this.onClickListener = onClickListener;
-        }
-
-        @Override
-        public String toString() {
-            return "BarAction{" +
-                    "name='" + name + '\'' +
-                    ", expanded=" + expanded +
-                    ", parentAdapter=" + parentAdapter +
-                    ", children=" + children +
-                    ", parent=" + parent +
-                    ", onClickListener=" + onClickListener +
-                    '}';
-        }
     }
 
-    public class BarActionAdapter extends RecyclerView.Adapter<BarActionAdapter.MyViewHolder> {
-
-        private List<BarAction> items;
-        int lastPosition = -1;
-
-        public class MyViewHolder extends RecyclerView.ViewHolder {
-            public Button button;
-
-            public MyViewHolder(View view) {
-                super(view);
-                button = (Button) view.findViewById(R.id.button);
-            }
-
-        }
-
-        public void addAction(BarAction barAction){
-            barAction.parentAdapter =this;
-            items.add(barAction);
-        }
-
-        public void addAction(BarAction barAction,BarAction afterItem){
-            items.add(items.indexOf(afterItem)+1,barAction);
-        }
 
 
-
-
-        public BarActionAdapter(List<BarAction> items) {
-            this.items = items;
-        }
-
-        @Override
-        public MyViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-            View itemView = LayoutInflater.from(parent.getContext()).inflate(R.layout.buttons_recycle_view_button, parent, false);
-
-            return new MyViewHolder(itemView);
-        }
-
-        @Override
-        public void onBindViewHolder(MyViewHolder holder, int position) {
-            BarAction movie = getOuterArray().get(position);
-            holder.button.setText(movie.getName());
-            holder.button.setOnClickListener(movie.getOnClickListener());
-
-        }
-
-        private List<BarAction> getOuterArray(){
-            List<BarAction> result = new ArrayList<>();
-            result.addAll(iterateArray(items));
-            return result;
-        }
-
-        private List<BarAction> iterateArray(List<BarAction> array){
-            List<BarAction> result = new ArrayList<>();
-            for(BarAction b:array){
-                result.add(b);
-                if(b.expanded) result.addAll(iterateArray(b.children));
-            }
-            return result;
-        }
-
-        @Override
-        public int getItemCount() {
-            return getOuterArray().size();
-        }
-    }
 
 }
