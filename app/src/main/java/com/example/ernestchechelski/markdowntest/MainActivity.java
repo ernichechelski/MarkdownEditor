@@ -40,6 +40,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import jp.wasabeef.recyclerview.animators.SlideInLeftAnimator;
+import jp.wasabeef.recyclerview.animators.SlideInUpAnimator;
+
 public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "MainActivity";
@@ -134,10 +137,11 @@ public class MainActivity extends AppCompatActivity {
         webView.getSettings().setDomStorageEnabled(true);
         editText = (EditText) this.findViewById(R.id.editText);
         recyclerView = (RecyclerView) findViewById(R.id.buttons_recycler_view);
+        recyclerView.setItemAnimator(new SlideInUpAnimator());
         mAdapter = new BarActionAdapter(rawTags);
         RecyclerView.LayoutManager mLayoutManager = new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false);
         recyclerView.setLayoutManager(mLayoutManager);
-        recyclerView.setItemAnimator(new DefaultItemAnimator());
+        //recyclerView.setItemAnimator(new DefaultItemAnimator());
         recyclerView.setAdapter(mAdapter);
         webView.getSettings().setJavaScriptEnabled(true);
         //editText.setText("This is *Sparta*");
@@ -303,7 +307,11 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void onClick(View view) {
                         expanded = !expanded;
-                        parentAdapter.notifyDataSetChanged();
+                        if(expanded) {
+                            parentAdapter.notifyItemRangeInserted(parentAdapter.getOuterArray().indexOf(BarAction.this)+1,BarAction.this.children.size());
+                        } else {
+                            parentAdapter.notifyItemRangeRemoved(parentAdapter.getOuterArray().indexOf(BarAction.this)+1,BarAction.this.children.size());
+                        }
 
                     }
                 };
@@ -340,9 +348,6 @@ public class MainActivity extends AppCompatActivity {
                     '}';
         }
     }
-
-
-
 
     public class BarActionAdapter extends RecyclerView.Adapter<BarActionAdapter.MyViewHolder> {
 
@@ -388,22 +393,19 @@ public class MainActivity extends AppCompatActivity {
             holder.button.setText(movie.getName());
             holder.button.setOnClickListener(movie.getOnClickListener());
 
-            if(true) {
-                Animation animation = AnimationUtils.loadAnimation(getApplicationContext(),
-                        R.anim.up_from_bottom);
-                holder.itemView.startAnimation(animation);
-                lastPosition = position;
-            }
         }
 
         private List<BarAction> getOuterArray(){
             List<BarAction> result = new ArrayList<>();
-            for(BarAction b: items){
+            result.addAll(iterateArray(items));
+            return result;
+        }
+
+        private List<BarAction> iterateArray(List<BarAction> array){
+            List<BarAction> result = new ArrayList<>();
+            for(BarAction b:array){
                 result.add(b);
-                if(b.expanded)
-                for(BarAction c:b.children){
-                    result.add(c);
-                }
+                if(b.expanded) result.addAll(iterateArray(b.children));
             }
             return result;
         }
