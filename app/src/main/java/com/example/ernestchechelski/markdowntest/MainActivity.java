@@ -12,16 +12,12 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.webkit.WebView;
 import android.widget.Button;
 import android.widget.EditText;
-
 import com.example.ernestchechelski.markdowntest.customQuote.CustomQuoteExtension;
-import com.example.ernestchechelski.markdowntest.customQuote.CustomQuoteRepository;
-import com.example.ernestchechelski.markdowntest.notes.domain.Note;
-import com.example.ernestchechelski.markdowntest.notes.NotesRepository;
-import com.example.ernestchechelski.markdowntest.notes.SugarNotesRepository;
-import com.orm.SugarDb;
 import com.vladsch.flexmark.ast.Node;
 import com.vladsch.flexmark.html.HtmlRenderer;
 import com.vladsch.flexmark.parser.Parser;
@@ -43,67 +39,112 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import jp.wasabeef.recyclerview.animators.SlideInLeftAnimator;
+import jp.wasabeef.recyclerview.animators.SlideInUpAnimator;
+
 public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "MainActivity";
 
-    //UI related properties
-    private WebView webView;
-    private EditText editText;
-    private RecyclerView recyclerView;
-    private MoviesAdapter mAdapter;
-    private List<BarAction> rawTags = new ArrayList<>();
+    WebView webView;
+    EditText editText;
+    Parser parser;
+    HtmlRenderer renderer;
 
-    //Editor related properties
-    private Parser parser;
-    private HtmlRenderer renderer;
-    private NotesRepository notesRepository;
-    private Note currentNote;
+    private RecyclerView recyclerView;
+    private BarActionAdapter mAdapter;
+    private List<BarAction> rawTags = new ArrayList<>();
+    private List<BarAction> autoTags = new ArrayList<>();
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-        setTitle("Markdown Editor");
+        Log.d(TAG,"onCreate");
         setUI();
-        loadData();
+        setMarkdown();
+        loadRawTags();
+        loadAnotherTags();
+        refresh();
+        //loadTestData();
+        //loadTestAsset();
+        loadTestVerse();
 
     }
 
-    private void setMarkdownParser() {
-        parser = getParser();
-        renderer = getHtmlRenderer();
+    private void loadTestAsset() {
+        try {
+            Log.d(TAG,"Loading assets");
+            AssetManager mgr = getBaseContext().getAssets();
+            String htmlContentInStringFormat;
+            String htmlFilename = "Bible/1001061105.xhtml";
+            InputStream in = mgr.open(htmlFilename, AssetManager.ACCESS_BUFFER);
+            htmlContentInStringFormat = StreamToString(in);
+            Log.d(TAG,"String loaded"+htmlContentInStringFormat);
+            Document document = Jsoup.parse(htmlContentInStringFormat);
+            Elements elements = document.select("#p2");
+            Log.d(TAG,"Element with content loaded" + elements.html());
+            loadHTML(elements.html());
+
+            in.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
-
-    private Parser getParser(){
-        return Parser.builder(getOptions()).build();
+    public static String StreamToString(InputStream in) throws IOException {
+        Log.d(TAG,"StreamToString");
+        if(in == null) {
+            return "";
+        }
+        Writer writer = new StringWriter();
+        char[] buffer = new char[1024];
+        try {
+            Reader reader = new BufferedReader(new InputStreamReader(in, "UTF-8"));
+            int n;
+            while ((n = reader.read(buffer)) != -1) {
+                writer.write(buffer, 0, n);
+            }
+        } finally {
+        }
+        return writer.toString();
     }
-    private HtmlRenderer getHtmlRenderer(){
-        return HtmlRenderer.builder(getOptions()).build();
-    }
-
-    private MutableDataSet getOptions(){
+    private void setMarkdown() {
+        Log.v(TAG,"setMarkdown()");
         MutableDataSet options = new MutableDataSet()
                 .set(Parser.REFERENCES_KEEP, KeepType.LAST)
                 .set(HtmlRenderer.INDENT_SIZE, 2)
                 .set(HtmlRenderer.PERCENT_ENCODE_URLS, true)
                 .set(CustomQuoteExtension.USE_IMAGE_URLS,true)
-                .set(Parser.EXTENSIONS, Arrays.asList(CustomQuoteExtension.create(this,"TestBible")));
-        return options;
+                .set(Parser.EXTENSIONS, Arrays.asList(CustomQuoteExtension.create(this,"Bible")));
+
+        parser = Parser.builder(options).build();
+        renderer = HtmlRenderer.builder(options).build();
+        // uncomment to set optional extensions
+        //options.set(Parser.EXTENSIONS, Arrays.asList(TablesExtension.create(), StrikethroughExtension.create()));
+
+        // uncomment to convert soft-breaks to hard breaks
+        //options.set(HtmlRenderer.SOFT_BREAK, "<br />\n");
+
     }
 
-
     private void setUI() {
+        Log.d(TAG,"setUI()");
+        setContentView(R.layout.activity_main);
+        this.setTitle("Markdown Editor");
         webView = (WebView) this.findViewById(R.id.webView);
         webView.getSettings().setDomStorageEnabled(true);
         editText = (EditText) this.findViewById(R.id.editText);
         recyclerView = (RecyclerView) findViewById(R.id.buttons_recycler_view);
-        mAdapter = new MoviesAdapter(rawTags);
+        recyclerView.setItemAnimator(new SlideInUpAnimator());
+        mAdapter = new BarActionAdapter(rawTags);
         RecyclerView.LayoutManager mLayoutManager = new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false);
         recyclerView.setLayoutManager(mLayoutManager);
-        recyclerView.setItemAnimator(new DefaultItemAnimator());
+        //recyclerView.setItemAnimator(new DefaultItemAnimator());
         recyclerView.setAdapter(mAdapter);
+        webView.getSettings().setJavaScriptEnabled(true);
+        //editText.setText("This is *Sparta*");
         editText.addTextChangedListener(new TextWatcher() {
 
             public void afterTextChanged(Editable s) {
@@ -117,95 +158,68 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
-        loadRawTags();
-        setMarkdownParser();
-        setNotesRepository();
     }
 
     private void loadRawTags() {
-        rawTags.add(new BarAction("#", new View.OnClickListener() {
+        Log.d(TAG,"loadRawTags()");
+
+        BarAction barAction = new BarAction("Hashes");
+
+
+
+        barAction.addChild(new BarAction("#", new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 insertTextInSelection("#");
             }
         }));
-        rawTags.add(new BarAction("*", new View.OnClickListener() {
+        barAction.addChild(new BarAction("*", new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 insertTextInSelection("*");
             }
         }));
-        rawTags.add(new BarAction("_", new View.OnClickListener() {
+
+        barAction.addChild(new BarAction("_", new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 insertTextInSelection("_");
             }
         }));
-        rawTags.add(new BarAction("[]()", new View.OnClickListener() {
+        barAction.addChild(new BarAction("[]()", new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 Integer selection = editText.getSelectionStart();
                 insertTextInSelection("[]()");
                 editText.setSelection(selection + 1);
+
             }
         }));
-        rawTags.add(new BarAction("||", new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Integer selection = editText.getSelectionStart();
-                insertTextInSelection("||");
-                editText.setSelection(selection + 1);
-            }
-        }));
-        rawTags.add(new BarAction("``", new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Integer selection = editText.getSelectionStart();
-                insertTextInSelection("``");
-                editText.setSelection(selection + 1);
-            }
-        }));
-        rawTags.add(new BarAction(">", new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                insertTextInSelection(">");
-            }
-        }));
-        rawTags.add(new BarAction("H1", new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                insertTextInSelection("#");
-            }
-        }));
-        rawTags.add(new BarAction("H2", new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                insertTextInSelection("##");
-            }
-        }));
-        rawTags.add(new BarAction("H3", new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                insertTextInSelection("###");
-            }
-        }));
-        rawTags.add(new BarAction("H4", new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                insertTextInSelection("####");
-            }
-        }));
-        rawTags.add(new BarAction("H5", new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                insertTextInSelection("#####");
-            }
-        }));
+        mAdapter.addAction(barAction);
+
+
+    }
+
+    private void loadAnotherTags() {
+        Log.d(TAG,"loadAnotherTags()");
+
+        BarAction barAction = new BarAction("XD");
+
+        for(int x=0;x<10;x++){
+            final int finalX = x;
+            barAction.addChild(new BarAction(x+"", new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    insertTextInSelection("XD"+ finalX);
+                }
+            }));
+        }
+        mAdapter.addAction(barAction);
     }
 
 
     private void insertTextInSelection(String textToInsert) {
-       insertTextInSelection(textToInsert,0);
+        insertTextInSelection(textToInsert,0);
     }
     private void insertTextInSelection(String textToInsert,Integer shift) {
         int start = Math.max(editText.getSelectionStart()+shift, 0);
@@ -216,41 +230,100 @@ public class MainActivity extends AppCompatActivity {
 
 
     private void refresh(){
-        if (currentNote != null){
-            currentNote.setContent(editText.getText().toString());
-            notesRepository.saveNote(currentNote);
-        }
+        Log.d(TAG, "refresh()");
         Node document = parser.parse(editText.getText().toString());
-        String html = renderer.render(document);
-        webView.getSettings().setJavaScriptEnabled(true);
-        webView.loadDataWithBaseURL("", html, "text/html", "UTF-8", "");
+        String html = renderer.render(document);  // "<p>This is <em>Sparta</em></p>\n"
+        loadHTML(html);
         System.out.println(html);
-        Log.v(TAG, "Refresh()=" + html);
+        Log.d(TAG, "refresh()=" + html);
     }
 
-
-    private void loadData(){
-        currentNote = notesRepository.getNote(1L);
-        if(currentNote!=null){
-
-        }else {
-            currentNote = notesRepository.createBlankNote();
-        }
-        editText.setText(currentNote.getContent());
-        refresh();
+    private void loadHTML(String html) {
+        webView.loadDataWithBaseURL("", html, "text/html", "UTF-8", "");
     }
 
-    private void setNotesRepository() {
-        notesRepository = new SugarNotesRepository();
+    private void loadTestData(){
+        editText.setText("An h1 header\n" +
+                "============\n" +
+                "\n" +
+                "Paragraphs are separated by a blank line.\n" +
+                "\n" +
+                "2nd paragraph. *Italic*, **bold**, and `monospace`. Itemized lists\n" +
+                "look like:\n" +
+                "\n" +
+                "  * this one\n" +
+                "  * that one\n" +
+                "  * the other one\n" +
+                "\n" +
+                "Note that --- not considering the asterisk --- the actual text\n" +
+                "content starts at 4-columns in.\n" +
+                "\n" +
+                "> Block quotes are\n" +
+                "> written like so.\n" +
+                ">\n" +
+                "> They can span multiple paragraphs,\n" +
+                "> if you like.\n" +
+                "\n" +
+                "Use 3 dashes for an em-dash. Use 2 dashes for ranges (ex., \"it's all\n" +
+                "in chapters 12--14\"). Three dots ... will be converted to an ellipsis.\n" +
+                "Unicode is supported. ☺\n" +
+                "\n");refresh();
+
+
     }
 
+    private void loadTestVerse(){
+        editText.setText("|Ge1:1|");refresh();
+
+
+    }
     public class BarAction {
         public String name;
+        public Boolean expanded;
+        public BarActionAdapter parentAdapter;
+        public List<BarAction> children;
+        public BarAction parent;
         public View.OnClickListener onClickListener;
 
         public BarAction(String name, View.OnClickListener onClickListener) {
+            this.expanded =false;
             this.name = name;
             this.onClickListener = onClickListener;
+            children = new ArrayList<>();
+        }
+
+        public BarAction(String name) {
+            this.expanded =false;
+            this.name = name;
+            this.onClickListener = new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    Log.d(TAG,"Default onClickListener for BarAction:" + BarAction.this.toString());
+                }
+            };
+            children = new ArrayList<>();
+        }
+
+
+        public void addChild(BarAction barAction){
+            if(children.isEmpty()){
+                expanded = true;
+                barAction.parent = this;
+                onClickListener = new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        expanded = !expanded;
+                        if(expanded) {
+                            parentAdapter.notifyItemRangeInserted(parentAdapter.getOuterArray().indexOf(BarAction.this)+1,BarAction.this.children.size());
+                        } else {
+                            parentAdapter.notifyItemRangeRemoved(parentAdapter.getOuterArray().indexOf(BarAction.this)+1,BarAction.this.children.size());
+                        }
+
+                    }
+                };
+            }
+
+            children.add(barAction);
         }
 
         public String getName() {
@@ -264,12 +337,28 @@ public class MainActivity extends AppCompatActivity {
         public View.OnClickListener getOnClickListener() {
             return onClickListener;
         }
+
+        public void setOnClickListener(View.OnClickListener onClickListener) {
+            this.onClickListener = onClickListener;
+        }
+
+        @Override
+        public String toString() {
+            return "BarAction{" +
+                    "name='" + name + '\'' +
+                    ", expanded=" + expanded +
+                    ", parentAdapter=" + parentAdapter +
+                    ", children=" + children +
+                    ", parent=" + parent +
+                    ", onClickListener=" + onClickListener +
+                    '}';
+        }
     }
 
+    public class BarActionAdapter extends RecyclerView.Adapter<BarActionAdapter.MyViewHolder> {
 
-    public class MoviesAdapter extends RecyclerView.Adapter<MoviesAdapter.MyViewHolder> {
-
-        private List<BarAction> moviesList;
+        private List<BarAction> items;
+        int lastPosition = -1;
 
         public class MyViewHolder extends RecyclerView.ViewHolder {
             public Button button;
@@ -281,29 +370,55 @@ public class MainActivity extends AppCompatActivity {
 
         }
 
+        public void addAction(BarAction barAction){
+            barAction.parentAdapter =this;
+            items.add(barAction);
+        }
 
-        public MoviesAdapter(List<BarAction> moviesList) {
-            this.moviesList = moviesList;
+        public void addAction(BarAction barAction,BarAction afterItem){
+            items.add(items.indexOf(afterItem)+1,barAction);
+        }
+
+
+
+
+        public BarActionAdapter(List<BarAction> items) {
+            this.items = items;
         }
 
         @Override
         public MyViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-            View itemView = LayoutInflater.from(parent.getContext())
-                    .inflate(R.layout.buttons_recycle_view_button, parent, false);
+            View itemView = LayoutInflater.from(parent.getContext()).inflate(R.layout.buttons_recycle_view_button, parent, false);
 
             return new MyViewHolder(itemView);
         }
 
         @Override
         public void onBindViewHolder(MyViewHolder holder, int position) {
-            BarAction movie = moviesList.get(position);
+            BarAction movie = getOuterArray().get(position);
             holder.button.setText(movie.getName());
             holder.button.setOnClickListener(movie.getOnClickListener());
+
+        }
+
+        private List<BarAction> getOuterArray(){
+            List<BarAction> result = new ArrayList<>();
+            result.addAll(iterateArray(items));
+            return result;
+        }
+
+        private List<BarAction> iterateArray(List<BarAction> array){
+            List<BarAction> result = new ArrayList<>();
+            for(BarAction b:array){
+                result.add(b);
+                if(b.expanded) result.addAll(iterateArray(b.children));
+            }
+            return result;
         }
 
         @Override
         public int getItemCount() {
-            return moviesList.size();
+            return getOuterArray().size();
         }
     }
 
