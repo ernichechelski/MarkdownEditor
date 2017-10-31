@@ -36,9 +36,9 @@ import java.util.Arrays;
 import java.util.List;
 import jp.wasabeef.recyclerview.animators.SlideInUpAnimator;
 
-public class MainActivity extends AppCompatActivity {
+public class EditorActivity extends AppCompatActivity {
 
-    private static final String TAG = "MainActivity";
+    private static final String TAG = "EditorActivity";
 
     WebView webView;
     EditText editText;
@@ -59,7 +59,6 @@ public class MainActivity extends AppCompatActivity {
         setUI();
         setMarkdown();
         loadRawTags();
-
         refresh();
         //loadTestData();
         //loadTestAsset();
@@ -191,14 +190,7 @@ public class MainActivity extends AppCompatActivity {
 
 
 
-/*
         BarAction booksBarAction = new BarAction("B");
-
-
-
-
-
-
         BarAction genesisBarAction= new BarAction("Ge");
         final CustomQuoteBook book = CustomQuoteBooks.books.get("Ge");
         for(int x=0; x<10;x++){
@@ -221,7 +213,7 @@ public class MainActivity extends AppCompatActivity {
 
         booksBarAction.addChild(genesisBarAction);
 
-        mAdapter.addAction(booksBarAction);*/
+        mAdapter.addAction(booksBarAction);
         mAdapter.addAction(barAction);
 
     }

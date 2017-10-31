@@ -2,6 +2,7 @@ package com.example.ernestchechelski.markdowntest.notes;
 
 import com.example.ernestchechelski.markdowntest.notes.domain.Note;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -10,9 +11,32 @@ import java.util.List;
  */
 
 public class FakeNotesRepository implements NotesRepository {
+
+
+    static List<Note> notes = new ArrayList<>();
+    static Long idCounter = 0L;
+    static {
+        Note note = new Note("Example first note", "Example first text");
+        note.setId(idCounter);
+        notes.add(note);
+        idCounter++;
+
+        Note note2 = new Note("Example second note", "Example second text");
+        note2.setId(idCounter);
+        notes.add(note2);
+        idCounter++;
+    }
+
+
     @Override
     public Note getNote(Long id) {
-       return new Note("Example note","Example text");
+        for(Note n:notes) {
+            if(n.getId().equals(id)){
+                return n;
+            }
+        }
+
+       return getSampleNote();
     }
 
     @Override
@@ -22,16 +46,24 @@ public class FakeNotesRepository implements NotesRepository {
 
     @Override
     public void deleteNote(Note note) {
-
+        notes.remove(note);
     }
 
     @Override
     public void saveNote(Note note) {
-
+        note.setId(idCounter);
+        notes.add(note);
     }
 
     @Override
     public List<Note> getNotes() {
-       return Arrays.asList(new Note("Example first note","Example first text"),new Note("Example second note","Example second text"));
+       return notes;
     }
+
+    private Note getSampleNote(){
+        Note note = new Note("Sample note", "Sample text");
+        note.setId(idCounter);
+        return note;
+    }
+
 }

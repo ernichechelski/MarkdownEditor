@@ -8,7 +8,7 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:fontFamily="helvetica-neue"
-    tools:context="com.example.ernestchechelski.markdowntest.MainActivity"
+    tools:context="com.example.ernestchechelski.markdowntest.EditorActivity"
     tools:layout_editor_absoluteX="8dp"
     tools:layout_editor_absoluteY="8dp">
 
