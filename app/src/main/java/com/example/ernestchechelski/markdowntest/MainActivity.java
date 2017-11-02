@@ -13,8 +13,6 @@ import android.webkit.WebView;
 import android.widget.EditText;
 import com.example.ernestchechelski.markdowntest.barAction.BarAction;
 import com.example.ernestchechelski.markdowntest.barAction.BarActionAdapter;
-import com.example.ernestchechelski.markdowntest.customQuote.CustomQuoteBook;
-import com.example.ernestchechelski.markdowntest.customQuote.CustomQuoteBooks;
 import com.example.ernestchechelski.markdowntest.customQuote.CustomQuoteExtension;
 import com.vladsch.flexmark.ast.Node;
 import com.vladsch.flexmark.html.HtmlRenderer;
@@ -125,7 +123,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void setUI() {
         Log.d(TAG,"setUI()");
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.activity_editor);
         this.setTitle("Markdown Editor");
         webView = (WebView) this.findViewById(R.id.webView);
         webView.getSettings().setDomStorageEnabled(true);
